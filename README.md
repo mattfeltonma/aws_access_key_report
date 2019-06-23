@@ -15,9 +15,11 @@ My plan is to use this script in a larger solution I'm creating that will run as
 * [AWS Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html?id=docs_gateway)
 
 ### AWS IAM Permissions Requirement
+I've included a CloudFormation template that will create the IAM Group and IAM Managed Policy with the required permissions.
 * IAM:ListUsers
 * IAM:ListAccessKeys
 * IAM:GetAccessKeyLastUsed
+
 
 ## Execution
 
