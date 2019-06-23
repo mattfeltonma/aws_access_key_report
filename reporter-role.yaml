@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create IAM Group and Policy for AWS Access Key Reporter"
+Parameters:
+
+  AWSAccessKeyReporterGroupName:
+    Type: String
+    Description: 'This is the name of the Access Key Reporter Group'
+    
+Resources:
+
+  ## Create IAM Group
+
+  AccessKeyReporterIAMGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Ref AWSAccessKeyReporterGroupName   
+
+
+  ## Create IAM Policy
+
+  InfrastructureAdminsIAMPolicy:  
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Groups: 
+        - !Ref AccessKeyReporterIAMGroup
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+
+            ## Allow list users
+          -
+            Sid: "AllowListUseres"
+            Effect: "Allow"
+            Action:
+              - "iam:ListUsers"
+            Resource: "*"
+            
+            ## Allow get information about access keys
+          -
+            Sid: "AllowAccessKeyReport"
+            Effect: "Allow"
+            Action:
+              - "iam:ListAccessKeys"
+              - "iam:GetAccessKeyLastUsed"
+
+            Resource: "arn:aws:iam::*:user/*"
+      ManagedPolicyName: Custom-Access-Key-Reporting
