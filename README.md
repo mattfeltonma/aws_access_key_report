@@ -6,7 +6,7 @@ AWS IAM User access keys and secret keys are used to provide 3rd party access to
 
 The script queries the AWS IAM API to pull a listing of AWS IAM Users from an account, queries for a listing of the access keys each account has provisioned, and then pulls metadata about each key including the creation date, the last date the key was used, and more.  The data is outputed into a CSV file which can be consumed in your favorite logging or data platform.  Access keys are sanitized prior to writing to the CSV by keeping only the first and last four characters.
 
-My plan is to use this script in a larger solution I'm creating that will run as an Azure Function.  Due to this long term plan, the script is setup to use an access key or secret key.  Minimum work would be required to switch this to an IAM Role if you plan to run this as an AWS Lambda.
+My plan is to use this script in a larger solution I'm creating that will run as an Azure Function.  Due to this long term plan, the script is setup to use an IAM User access key and secret key.  Minimum work would be required to switch this to an IAM Role if you plan to run this as an AWS Lambda.
 
 ## Requirements
 
