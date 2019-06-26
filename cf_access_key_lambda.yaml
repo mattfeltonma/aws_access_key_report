@@ -10,7 +10,6 @@ Parameters:
   ReportBucket:
     Type: String
     Description: 'The S3 bucket where the report will be stored'
-    AllowedPattern: '[a-zA-Z0-9]{1,100}'
   ReportBucketPrefix:
     Type: String
     Description: 'The name of the S3 prefix the report will be written to'
@@ -39,12 +38,14 @@ Resources:
 
   ## Create IAM Policy
 
-  AzureADLogsIAMPolicy:
+  AcceessReporterIAMPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: 'Custom-Lambda-AccessKeyReporter-Policy'
       Description: 'This policy grants the Lambda appropriate access to IAM and S3'
       Path: "/"
+      Roles:
+        - !Ref LambdaIAMRole
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -71,7 +72,6 @@ Resources:
               - "iam:ListAccessKeys"
               - "iam:GetAccessKeyLastUsed"
             Resource: "arn:aws:iam::*:user/*"
-      ManagedPolicyName: 'Custom-Lambda-AccessKeyReporter-Policy'
 
   # Create Lambda Function
 
