@@ -65,7 +65,7 @@ def export_report(data):
     todaydate = (datetime.now()).strftime("%Y-%m-%d")
     encoded_string = data.encode("utf-8")
     logging.info("Writing report to S3...")
-    s3_path = os.environ['s3_prefix'] + "/" + todaydate + ".json"
+    s3_path = os.environ['s3_prefix'] + "/" + todaydate + ".csv"
     s3 = boto3.resource('s3')
     s3.Bucket(os.environ['bucket']).put_object(Key=s3_path, Body=encoded_string)
     
