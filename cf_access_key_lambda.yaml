@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create IAM Group and Policy for AWS Access Key Reporter"
+Parameters:
+  LambdaBucketName:
+    Type: String
+    Description: 'The S3 bucket where the Lambda code is stored'
+  LambdaCodeFileName:
+    Type: String
+    Description: 'Name of file containing Lambda code (must be .zip)'
+  ReportBucket:
+    Type: String
+    Description: 'The S3 bucket where the report will be stored'
+    AllowedPattern: '[a-zA-Z0-9]{1,100}'
+  ReportBucketPrefix:
+    Type: String
+    Description: 'The name of the S3 prefix the report will be written to'
+    
+Resources:
+
+  ## Create Lambda IAM Role
+
+  LambdaIAMRole:  
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      RoleName: Custom-Lambda-AccessKeyReporter
+
+  ## Create IAM Policy
+
+  AzureADLogsIAMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: 'Custom-Lambda-AccessKeyReporter-Policy'
+      Description: 'This policy grants the Lambda appropriate access to IAM and S3'
+      Path: "/"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "s3:PutObject"
+            Resource: 
+              - !Join ['', ['arn:aws:s3:::', !Ref ReportBucket, "/", !Ref ReportBucketPrefix, "/*"]]
+
+            ## Allow list users
+          -
+            Sid: "AllowListUseres"
+            Effect: "Allow"
+            Action:
+              - "iam:ListUsers"
+            Resource: "*"
+            
+            ## Allow get information about access keys
+          -
+            Sid: "AllowAccessKeyReport"
+            Effect: "Allow"
+            Action:
+              - "iam:ListAccessKeys"
+              - "iam:GetAccessKeyLastUsed"
+            Resource: "arn:aws:iam::*:user/*"
+      ManagedPolicyName: 'Custom-Lambda-AccessKeyReporter-Policy'
+
+  # Create Lambda Function
+
+  CreateLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: 'lambda_function.lambda_handler'
+      Role: !GetAtt LambdaIAMRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaBucketName
+        S3Key: !Ref LambdaCodeFileName
+      Runtime: 'python3.6'
+      Environment:
+        Variables:
+          's3_prefix': !Ref ReportBucketPrefix
+          'bucket': !Ref ReportBucket
+      FunctionName: "Custom-Lambda-Access-Key-Reporter"
+      Timeout: 900

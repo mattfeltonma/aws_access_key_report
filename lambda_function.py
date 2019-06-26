@@ -3,8 +3,9 @@ import logging
 import re
 import csv
 import boto3
+import os
 
-from argparse import ArgumentParser
+from io import StringIO
 from datetime import datetime
 
 # Parse the IAM User ARN to extract the AWS account number
@@ -13,14 +14,12 @@ def parse_arn(arn_string):
     return acct_num[0]
 
 # Query for a list of AWS IAM Users
-def query_iam_users(accesskey,secretkey):
+def query_iam_users():
     
     todaydate = (datetime.now()).strftime("%Y-%m-%d")
     users = []
     client = boto3.client(
-        'iam',
-        aws_access_key_id = accesskey,
-        aws_secret_access_key = secretkey
+        'iam'
     )
 
     paginator = client.get_paginator('list_users')
@@ -32,12 +31,10 @@ def query_iam_users(accesskey,secretkey):
     return users
 
 # Query for a list of access keys and information on access keys for an AWS IAM User
-def query_access_keys(accesskey,secretkey,user):
+def query_access_keys(user):
     keys = []
     client = boto3.client(
-        'iam',
-        aws_access_key_id = accesskey,
-        aws_secret_access_key = secretkey
+        'iam'
     )
     paginator = client.get_paginator('list_access_keys')
     response_iterator = paginator.paginate(
@@ -64,7 +61,15 @@ def query_access_keys(accesskey,secretkey,user):
                 keys.append(key_rec)
     return keys
 
-def main():
+def export_report(data):
+    todaydate = (datetime.now()).strftime("%Y-%m-%d")
+    encoded_string = data.encode("utf-8")
+    logging.info("Writing report to S3...")
+    s3_path = os.environ['s3_prefix'] + "/" + todaydate + ".json"
+    s3 = boto3.resource('s3')
+    s3.Bucket(os.environ['bucket']).put_object(Key=s3_path, Body=encoded_string)
+    
+def lambda_handler(event, context):
 
     # Enable logging to console
     logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -74,31 +79,25 @@ def main():
         # Initialize empty list
         key_records = []
 
-        # Process parameters file
-        parser = ArgumentParser()
-        parser.add_argument('-parameterfile', type=str, help='JSON file with parameters')
-        parser.add_argument('-exportfile', type=str, default='azure_resources.json', help='Name of export file (default: azure_resources.json')
-        args = parser.parse_args()
-
-        with open(args.parameterfile) as json_data:
-            config = json.load(json_data)
-
         # Retrieve list of IAM Users
-        users = query_iam_users(config['accesskey'],config['secretkey'])
+        logging.info("Retrieving a list of IAM Users...")
+        users = query_iam_users()
 
         # Retrieve list of access keys for each IAM User and add to record
+        logging.info("Retrieving a listing of access keys for each IAM User...")
         for user in users:
-            key_records.extend(query_access_keys(config['accesskey'],config['secretkey'],user))
-        print(key_records)
-        # Convert to CSV and write to file
+            key_records.extend(query_access_keys(user))
+
+        # Convert to CSV and store contents in a StringIO
+        output = StringIO()
         dictkeys = key_records[0].keys()
-        with open(args.exportfile, 'w') as output_file:
-            dict_writer = csv.DictWriter(output_file, dictkeys)
-            dict_writer.writeheader()
-            dict_writer.writerows(key_records)
+        dict_writer = csv.DictWriter(output,dictkeys)
+        dict_writer.writeheader()
+        dict_writer.writerows(key_records)
+
+        # Export report to another format
+        logging.info("Creating report...")
+        export_report(output.getvalue())
 
     except Exception as e:
         logging.error("Execution error",exc_info=True)
-
-if __name__ == "__main__":
-    main()
