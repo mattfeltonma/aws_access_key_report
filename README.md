@@ -18,6 +18,6 @@ The script queries the AWS IAM API to pull a listing of AWS IAM Users from an ac
 * IAM:GetAccessKeyLastUsed
 * S3:PutObject (only required for user specific S3 prefix)
 
-## Execution
+## Setup
 The can be pushed using the provided CloudFormation template.  The code must be placed into a ZIP file and placed on an S3 bucket the user creating the CloudFormation stack.  
 
