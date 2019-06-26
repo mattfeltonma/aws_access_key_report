@@ -1,5 +1,5 @@
 # AWS Access Key Report
-This Python script queries an AWS account for a listing of all AWS IAM User access keys, their ages, and information on their last usage.
+This Lambda queries an AWS account for a listing of all AWS IAM User access keys, their ages, and information on their last usage.
 
 ## What problem does this solve?
 AWS IAM User access keys and secret keys are used to provide 3rd party access to AWS resources when AWS IAM Roles are not an option.  Managing the lifecycle of the keys can difficult and often leads to stale keys which are never rotated or disabled which creates a security risk.  While [Credential Reports](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html) provide some of this information, it is often user centric verus key centric.  It also does not provide the key IDs which creates more work to determine which key needs to be rotated.
