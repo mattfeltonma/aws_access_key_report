@@ -47,17 +47,21 @@ def query_access_keys(user):
             response = client.get_access_key_last_used(
                 AccessKeyId = key['AccessKeyId']
             )
-
             # Santize key before sending it along for export
 
             sanitizedacctkey = key['AccessKeyId'][:4] + '...' + key['AccessKeyId'][-4:]
             # Create new dictonionary object with access key information
             if 'LastUsedDate' in response.get('AccessKeyLastUsed'):
+
                 key_rec = {'loggedDate':user['loggedDate'],'user':user['username'],'account_number':user['account_number'],
-                'AccessKeyId':sanitizedacctkey,'CreateDate':(key['CreateDate']).strftime("%m-%d-%Y %H:%M:%S"),
-                'LastUsedDate':(response['AccessKeyLastUsed']['LastUsedDate']).strftime("%m-%d-%Y %H:%M:%S"),
+                'AccessKeyId':sanitizedacctkey,'CreateDate':(transform_datetime(key['CreateDate'])),
+                'LastUsedDate':(transform_datetime(response['AccessKeyLastUsed']['LastUsedDate'])),
                 'Region':response['AccessKeyLastUsed']['Region'],'Status':key['Status'],
                 'ServiceName':response['AccessKeyLastUsed']['ServiceName']}
+                keys.append(key_rec)
+            else:
+                key_rec = {'loggedDate':user['loggedDate'],'user':user['username'],'account_number':user['account_number'],
+                'AccessKeyId':sanitizedacctkey,'CreateDate':(transform_datetime(key['CreateDate'])),'Status':key['Status']}
                 keys.append(key_rec)
     return keys
 
